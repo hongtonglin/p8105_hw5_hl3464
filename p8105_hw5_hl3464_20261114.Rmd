@@ -140,6 +140,43 @@ glimpse(sim_results)
 ```
 
 
+Power vs true value of mean  
+
+```{r}
+sim_results |> 
+  mutate(rejected = p_value < 0.5) |> 
+  filter(true_mu > 0) |> 
+  group_by(true_mu) |> 
+  summarize(power = mean(rejected)) |> 
+  ggplot(aes(x = true_mu, y = power)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_x_continuous(breaks = 1:6) + 
+  scale_y_continuous(
+    limits = c(0,1),
+    breaks = c(0, 0.1, seq(0.7, 1.0, by = 0.1))
+    ) + 
+  ggbreak::scale_y_break(
+    breaks = c(0.01, 0.7), 
+    scales = 15,           # higher scale, taller the 0.7-1.0 range
+    symbol = "slash"       # Adds the // break marks on the axis
+  ) + 
+  labs(
+    x = "True Mean µ",
+    y = "Power (Proportion Rejected)"
+  )
+```
+  
+Standardized Effect Size is:  
+
+$$
+d = \frac{\mu - \mu_0}{\sigma}
+$$  
+So in this case,  
+$$
+d = \frac{\mu - 0}{5} = \frac{\mu}{5}
+$$  
+That means, when true mean increases, the effect size also increases. The plot shows that when the true mean increases, power also increases, so there is a positive association between effect size and power.  
 
 
 
