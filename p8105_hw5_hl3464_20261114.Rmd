@@ -164,7 +164,8 @@ sim_results |>
   labs(
     x = "True Mean µ",
     y = "Power (Proportion Rejected)"
-  )
+  ) + 
+  theme_classic(base_size = 16)
 ```
   
 Standardized Effect Size is:  
@@ -177,7 +178,57 @@ $$
 d = \frac{\mu - 0}{5} = \frac{\mu}{5}
 $$  
 That means, when true mean increases, the effect size also increases. The plot shows that when the true mean increases, power also increases, so there is a positive association between effect size and power.  
+  
+  
+
+Average µ hat v.s true mean plot  
+
+```{r}
+all_samples <- 
+  sim_results |> 
+  filter(true_mu > 0) |> 
+  group_by(true_mu) |> 
+  summarise(avg_estimate_mu = mean(mu_hat)) |> 
+  mutate(group = "All Samples") |>  relocate(group)
 
 
+rejected_samples <- 
+  sim_results |> 
+  mutate(rejected = p_value < 0.5) |> 
+  filter(true_mu > 0, 
+         rejected == TRUE) |> 
+  group_by(true_mu) |> 
+  summarise(avg_estimate_mu = mean(mu_hat)) |> 
+  mutate(group = "Rejected Null") |>
+  relocate(group)
 
+
+all_samples |> 
+  bind_rows(rejected_samples) |> 
+  ggplot(aes(x = true_mu, y = avg_estimate_mu, color = group, shape = group)) + 
+  geom_point(size = 2.5) + 
+  geom_line() + 
+  scale_color_manual(values = c("#e1be6a", "#40b0a6")) + 
+  scale_shape_manual(values = c(16, 17)) +
+  scale_x_continuous(breaks = 1:6) + 
+  scale_y_continuous(breaks = seq(1, 6, by = 0.5)) + 
+  labs(
+    x = "True Mean µ",
+    y = "Average Estimate µ hat",
+    color = "Sample Group",
+    shape = "Sample Group"
+  ) + 
+  theme_classic(base_size = 16) 
+
+all_samples |> 
+  bind_rows(rejected_samples) |> 
+  pivot_wider(
+    names_from = group,
+    values_from = avg_estimate_mu
+  )
+```
+
+The sample average of µ hat among rejected tests is not equal to the true µ when true mean is low (µ = 1, 2, 3) or when the effect size is small. However, when true mean or effect size increases, the deviation from the sample average of µ hat among reject tests to the true µ is getting smaller and smaller. And when true µ reaches 4, the sample average of µ hat among rejected tests is almost the same as the true mean.  
+
+With n=30 and sigma=5 fixed, the sample average µ hat needs to be ≥ 1.8 to get p<0.05 and reject the null. When the true mean or effect size is small, the average can barely be ≥1.8. Only a small sample or the lucky sample can pass the test or reject the null. However, if the true mean µ is already big enough, that means the sample values are already ≥1.8, so almost every value can pass the test or reject the null.
 
